@@ -384,4 +384,48 @@ public class UserController {
         }
         return storedGrade;
     }
+
+
+    @FXML
+    private void onShowYourFinalGradeClick(ActionEvent event) {
+
+        // Ambil rata-rata nilai berdasarkan user_id
+        double finalGrade = getFinalGradeFromDatabase(userId);
+
+        // Menampilkan rata-rata nilai dalam sebuah Alert atau popup
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Your Final Grade");
+        alert.setHeaderText(null);
+        alert.setContentText("Your final grade is: " + finalGrade);
+        alert.showAndWait();
+    }
+
+    private double getFinalGradeFromDatabase(int userId) {
+        double finalGrade = 0;
+
+        // Query untuk menghitung rata-rata nilai
+        String query = "SELECT COALESCE(SUM(g.grade), 0) / (SELECT COUNT(id) FROM assignments) AS average_grade " +
+                "FROM grades g " +
+                "JOIN assignments a ON g.assignment_id = a.id " +
+                "WHERE g.user_id = ?";
+
+        try (Connection conn = GradingDataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, userId);  // Set user_id yang login
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                finalGrade = rs.getDouble("average_grade");  // Ambil rata-rata nilai
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return finalGrade;
+    }
+
+
 }
