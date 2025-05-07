@@ -22,4 +22,8 @@ public class User {
         this.password = rs.getString("password");
         this.role = rs.getString("role");
     }
+
+    public long getId() {
+        return id;
+    }
 }

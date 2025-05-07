@@ -26,6 +26,12 @@ public class LoginController {
     @FXML
     private TextField usernameField;
 
+    private int userId;
+
+    public int getUserId() {
+        return userId;
+    }
+
     boolean verifyCredentials(String username, String password, String role) throws SQLException {
         // Call the database to verify the credentials
         // This is insecure as this stores the password in plain text.
@@ -46,6 +52,7 @@ public class LoginController {
                 String dbPassword = rs.getString("password");
 
                 if (dbPassword.equals(password)) {
+                    this.userId = rs.getInt("id");
                     return true; // Credentials are valid
                 }
             }
@@ -72,6 +79,7 @@ public class LoginController {
         try {
             if (verifyCredentials(username, password, role)) {
                 HelloApplication app = HelloApplication.getApplicationInstance();
+                app.setUserId(this.userId); // Store the user_id in HelloApplication
 
                 // Load the correct view based on the role
                 if (role.equals("Admin")) {
@@ -84,7 +92,12 @@ public class LoginController {
                     app.getPrimaryStage().setScene(scene);
                 } else {
                     // Load the user view
-                    app.getHostServices().showDocument("user-view.fxml");
+//                    app.getHostServices().showDocument("user-view.fxml");
+                    app.getPrimaryStage().setTitle("User View");
+                    FXMLLoader loader = new FXMLLoader(HelloApplication.class.getResource("user-view.fxml"));
+                    Scene scenes = new Scene(loader.load());
+                    app.getPrimaryStage().setScene(scenes);
+
                 }
             } else {
                 // Show an error message

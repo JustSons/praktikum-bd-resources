@@ -11,9 +11,18 @@ import java.io.IOException;
 
 public class HelloApplication extends Application {
     private static HelloApplication applicationInstance;
+    private int userId;
     private Stage primaryStage;
     public static HelloApplication getApplicationInstance () { return applicationInstance; }
     public Stage getPrimaryStage () { return primaryStage; }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public int getUserId() {
+        return this.userId;
+    }
 
     @Override
     public void start(Stage stage) throws IOException {
