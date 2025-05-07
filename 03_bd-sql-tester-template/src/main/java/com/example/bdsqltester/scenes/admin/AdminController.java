@@ -3,6 +3,7 @@ package com.example.bdsqltester.scenes.admin;
 import com.example.bdsqltester.datasources.GradingDataSource;
 import com.example.bdsqltester.datasources.MainDataSource;
 import com.example.bdsqltester.dtos.Assignment;
+import com.example.bdsqltester.dtos.UserGrade;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -186,8 +187,79 @@ public class AdminController {
             alert.setContentText("Please select an assignment to view grades.");
             alert.showAndWait();
             return;
+        }else {
+            // Ambil assignment_id dari assignment yang dipilih
+            int assignmentId = Integer.parseInt(idField.getText());
+
+            // Panggil method untuk menampilkan window baru
+            showGradesWindow(assignmentId);
         }
     }
+
+    private void showGradesWindow(int assignmentId) {
+        Stage gradesStage = new Stage();
+        gradesStage.setTitle("Grades for Assignment");
+
+        TableView<UserGrade> gradesTable = new TableView<>();
+        TableColumn<UserGrade, String> usernameColumn = new TableColumn<>("Username");
+        TableColumn<UserGrade, Integer> gradeColumn = new TableColumn<>("Grade");
+
+        // Set kolom untuk TableView
+        usernameColumn.setCellValueFactory(cellData -> cellData.getValue().usernameProperty());
+        gradeColumn.setCellValueFactory(cellData -> cellData.getValue().gradeProperty().asObject());
+
+        gradesTable.getColumns().add(usernameColumn);
+        gradesTable.getColumns().add(gradeColumn);
+
+        // Ambil data nilai user berdasarkan assignment_id
+        ObservableList<UserGrade> grades = fetchUserGradesForAssignment(assignmentId);
+
+        // Set data ke dalam table
+        gradesTable.setItems(grades);
+
+        StackPane root = new StackPane();
+        root.getChildren().add(gradesTable);
+        Scene scene = new Scene(root, 800, 600);
+        gradesStage.setScene(scene);
+        gradesStage.show();
+    }
+
+
+    private ObservableList<UserGrade> fetchUserGradesForAssignment(int assignmentId) {
+        ObservableList<UserGrade> grades = FXCollections.observableArrayList();
+
+        try (Connection conn = GradingDataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT u.username, g.grade " +
+                     "FROM grades g " +
+                     "JOIN users u ON g.user_id = u.id " +
+                     "WHERE g.assignment_id = ? ORDER BY g.user_id")) {
+
+            stmt.setInt(1, assignmentId);  // Set assignment_id yang dipilih oleh admin
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                String username = rs.getString("username");
+                int grade = rs.getInt("grade");
+
+                // Debugging output
+                System.out.println("Fetched Username: " + username + ", Grade: " + grade);
+
+                // Tambahkan hasil query ke ObservableList
+                grades.add(new UserGrade(username, grade));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Verifikasi apakah ObservableList telah terisi dengan benar
+        if (grades.isEmpty()) {
+            System.out.println("No grades found for assignmentId: " + assignmentId);
+        }
+
+        return grades;
+    }
+
+
 
     @FXML
     void onTestButtonClick(ActionEvent event) {
