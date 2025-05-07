@@ -224,6 +224,75 @@ public class AdminController {
         gradesStage.show();
     }
 
+    @FXML
+    void onDeleteClick(ActionEvent event) {
+        // Pastikan assignment_id sudah ada
+        if (idField.getText().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("No Assignment Selected");
+            alert.setContentText("Please select an assignment to delete.");
+            alert.showAndWait();
+            return;
+        }
+
+        // Tampilkan konfirmasi sebelum menghapus
+        Alert confirmDeleteAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmDeleteAlert.setTitle("Delete Assignment");
+        confirmDeleteAlert.setHeaderText("Are you sure you want to delete this assignment?");
+        confirmDeleteAlert.setContentText("This action cannot be undone.");
+
+        // Jika admin menekan "OK", lakukan penghapusan
+        confirmDeleteAlert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                int assignmentId = Integer.parseInt(idField.getText());
+                deleteAssignment(assignmentId);
+            }
+        });
+    }
+
+    private void deleteAssignment(int assignmentId) {
+        try (Connection c = MainDataSource.getConnection()) {
+            // 1. Hapus nilai yang terkait dengan assignment terlebih dahulu
+            PreparedStatement deleteGradesStmt = c.prepareStatement("DELETE FROM grades WHERE assignment_id = ?");
+            deleteGradesStmt.setInt(1, assignmentId);
+            int gradesDeleted = deleteGradesStmt.executeUpdate();
+            System.out.println("Deleted " + gradesDeleted + " grades for assignmentId: " + assignmentId);
+
+            // 2. Hapus assignment setelah nilai terkait dihapus
+            PreparedStatement deleteAssignmentStmt = c.prepareStatement("DELETE FROM assignments WHERE id = ?");
+            deleteAssignmentStmt.setInt(1, assignmentId);
+            int assignmentDeleted = deleteAssignmentStmt.executeUpdate();
+
+            if (assignmentDeleted > 0) {
+                // Menampilkan pesan sukses
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Success");
+                alert.setHeaderText("Assignment Deleted");
+                alert.setContentText("Assignment has been successfully deleted.");
+                alert.showAndWait();
+
+                // Refresh list untuk memperbarui tampilan
+                refreshAssignmentList();
+            } else {
+                // Jika tidak ada baris yang terhapus (misalnya, jika assignment_id tidak ditemukan)
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Delete Failed");
+                alert.setContentText("Assignment could not be found or deleted.");
+                alert.showAndWait();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Database Error");
+            alert.setHeaderText("Failed to delete assignment.");
+            alert.setContentText("SQL Error: " + e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+
 
     private ObservableList<UserGrade> fetchUserGradesForAssignment(int assignmentId) {
         ObservableList<UserGrade> grades = FXCollections.observableArrayList();
