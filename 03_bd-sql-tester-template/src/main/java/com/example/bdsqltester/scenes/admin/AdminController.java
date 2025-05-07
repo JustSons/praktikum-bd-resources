@@ -427,5 +427,77 @@ public class AdminController {
         }
     } // End of onTestButtonClick method
 
+    private ObservableList<UserGrade> fetchFinalGradesForUsers() {
+        ObservableList<UserGrade> grades = FXCollections.observableArrayList();
+
+        try (Connection conn = GradingDataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT u.username, " +
+                             "(SELECT COUNT(id) FROM assignments) AS total_assignments, " +
+                             "COALESCE(SUM(g.grade), 0) AS total_grade, " +
+                             "CASE " +
+                             "WHEN COUNT(DISTINCT a.id) = 0 THEN 0 " +
+                             "ELSE COALESCE(SUM(g.grade), 0) / (SELECT COUNT(id) FROM assignments) " +
+                             "END AS average_grade " +
+                             "FROM users u " +
+                             "LEFT JOIN grades g ON u.id = g.user_id " +
+                             "LEFT JOIN assignments a ON g.assignment_id = a.id " +
+                             "WHERE u.username != 'admin' " +
+                             "GROUP BY u.username " +
+                             "ORDER BY u.username")) {
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                String username = rs.getString("username");
+                double averageGrade = rs.getDouble("average_grade");
+                int totalAssignments = rs.getInt("total_assignments");
+
+                // Tambahkan hasil query ke ObservableList
+                grades.add(new UserGrade(username, totalAssignments, averageGrade));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return grades;
+    }
+
+    @FXML
+    void onShowFinalGradeClick(ActionEvent event) {
+        Stage gradesStage = new Stage();
+        gradesStage.setTitle("Final Grades for Users");
+
+        TableView<UserGrade> finalGradesTable = new TableView<>();
+        TableColumn<UserGrade, String> usernameColumn = new TableColumn<>("Username");
+        TableColumn<UserGrade, Integer> totalAssignmentsColumn = new TableColumn<>("Total Assignments");
+        TableColumn<UserGrade, Double> averageGradeColumn = new TableColumn<>("Average Grade");
+
+        // Set kolom untuk TableView
+        usernameColumn.setCellValueFactory(cellData -> cellData.getValue().usernameProperty());
+        totalAssignmentsColumn.setCellValueFactory(cellData -> cellData.getValue().totalAssignmentsProperty().asObject());
+        averageGradeColumn.setCellValueFactory(cellData -> cellData.getValue().averageGradeProperty().asObject());
+
+        finalGradesTable.getColumns().add(usernameColumn);
+        finalGradesTable.getColumns().add(totalAssignmentsColumn);
+        finalGradesTable.getColumns().add(averageGradeColumn);
+
+        // Ambil data nilai rata-rata untuk semua user
+        ObservableList<UserGrade> finalGrades = fetchFinalGradesForUsers();
+
+        // Set data ke dalam table
+        finalGradesTable.setItems(finalGrades);
+
+        StackPane root = new StackPane();
+        root.getChildren().add(finalGradesTable);
+        Scene scene = new Scene(root, 800, 600);
+        gradesStage.setScene(scene);
+        gradesStage.show();
+    }
+
+
+
+
+
 
 }

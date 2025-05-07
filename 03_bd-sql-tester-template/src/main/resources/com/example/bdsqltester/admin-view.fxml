@@ -17,7 +17,12 @@
    <items>
       <VBox alignment="TOP_RIGHT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
          <children>
-            <Button mnemonicParsing="false" onAction="#onNewAssignmentClick" text="New Assignment" />
+            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <Button mnemonicParsing="false" onAction="#onShowFinalGradeClick" text="Show Final Grade" translateX="-10.0" />
+                  <Button mnemonicParsing="false" onAction="#onNewAssignmentClick" text="New Assignment" translateX="10.0" />
+               </children>
+            </HBox>
             <ListView fx:id="assignmentList" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                <VBox.margin>
                   <Insets top="8.0" />

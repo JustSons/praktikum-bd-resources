@@ -37,7 +37,6 @@ public class UserController {
     private TextField nameField;
 
     private final ObservableList<Assignment> assignments = FXCollections.observableArrayList();
-    int grade = 0;
     @FXML
     void initialize() {
         // Set idField to read-only
@@ -73,6 +72,7 @@ public class UserController {
                 super.updateSelected(selected);
                 if (selected) {
                     onAssignmentSelected(getItem());
+                    answerKeyField.clear();
                 }
             }
         });
