@@ -12,9 +12,9 @@ public class GradingDataSource {
     private static HikariDataSource ds;
 
     static {
-        config.setJdbcUrl("jdbc:postgresql://localhost:5432/Juhamatulanim");
-        config.setUsername("manchester_united");
-        config.setPassword("manchester_united");
+        config.setJdbcUrl("jdbc:postgresql://localhost:5432/oracle_hr");
+        config.setUsername("readonly_grader");
+        config.setPassword("readonly_grader");
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");

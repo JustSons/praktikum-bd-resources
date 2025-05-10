@@ -172,7 +172,10 @@ public class AdminController {
                 alert.setContentText(e.toString());
             }
         }
-
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Save");
+        alert.setHeaderText("Tugas " + nameField.getText() +" Berhasil disave!");
+        alert.showAndWait();
         // Refresh the assignment list
         refreshAssignmentList();
     }
@@ -257,7 +260,7 @@ public class AdminController {
             PreparedStatement deleteGradesStmt = c.prepareStatement("DELETE FROM grades WHERE assignment_id = ?");
             deleteGradesStmt.setInt(1, assignmentId);
             int gradesDeleted = deleteGradesStmt.executeUpdate();
-            System.out.println("Deleted " + gradesDeleted + " grades for assignmentId: " + assignmentId);
+//            System.out.println("Deleted " + gradesDeleted + " grades for assignmentId: " + assignmentId);
 
             // 2. Hapus assignment setelah nilai terkait dihapus
             PreparedStatement deleteAssignmentStmt = c.prepareStatement("DELETE FROM assignments WHERE id = ?");
@@ -297,7 +300,7 @@ public class AdminController {
     private ObservableList<UserGrade> fetchUserGradesForAssignment(int assignmentId) {
         ObservableList<UserGrade> grades = FXCollections.observableArrayList();
 
-        try (Connection conn = GradingDataSource.getConnection();
+        try (Connection conn = MainDataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT u.username, g.grade " +
                      "FROM grades g " +
                      "JOIN users u ON g.user_id = u.id " +
@@ -311,7 +314,7 @@ public class AdminController {
                 int grade = rs.getInt("grade");
 
                 // Debugging output
-                System.out.println("Fetched Username: " + username + ", Grade: " + grade);
+//                System.out.println("Fetched Username: " + username + ", Grade: " + grade);
 
                 // Tambahkan hasil query ke ObservableList
                 grades.add(new UserGrade(username, grade));
@@ -322,7 +325,7 @@ public class AdminController {
 
         // Verifikasi apakah ObservableList telah terisi dengan benar
         if (grades.isEmpty()) {
-            System.out.println("No grades found for assignmentId: " + assignmentId);
+//            System.out.println("No grades found for assignmentId: " + assignmentId);
         }
 
         return grades;
@@ -430,7 +433,7 @@ public class AdminController {
     private ObservableList<UserGrade> fetchFinalGradesForUsers() {
         ObservableList<UserGrade> grades = FXCollections.observableArrayList();
 
-        try (Connection conn = GradingDataSource.getConnection();
+        try (Connection conn = MainDataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT u.username, " +
                              "(SELECT COUNT(id) FROM assignments) AS total_assignments, " +
@@ -470,16 +473,16 @@ public class AdminController {
 
         TableView<UserGrade> finalGradesTable = new TableView<>();
         TableColumn<UserGrade, String> usernameColumn = new TableColumn<>("Username");
-        TableColumn<UserGrade, Integer> totalAssignmentsColumn = new TableColumn<>("Total Assignments");
+//        TableColumn<UserGrade, Integer> totalAssignmentsColumn = new TableColumn<>("Total Assignments");
         TableColumn<UserGrade, Double> averageGradeColumn = new TableColumn<>("Average Grade");
 
         // Set kolom untuk TableView
         usernameColumn.setCellValueFactory(cellData -> cellData.getValue().usernameProperty());
-        totalAssignmentsColumn.setCellValueFactory(cellData -> cellData.getValue().totalAssignmentsProperty().asObject());
+//        totalAssignmentsColumn.setCellValueFactory(cellData -> cellData.getValue().totalAssignmentsProperty().asObject());
         averageGradeColumn.setCellValueFactory(cellData -> cellData.getValue().averageGradeProperty().asObject());
 
         finalGradesTable.getColumns().add(usernameColumn);
-        finalGradesTable.getColumns().add(totalAssignmentsColumn);
+//        finalGradesTable.getColumns().add(totalAssignmentsColumn);
         finalGradesTable.getColumns().add(averageGradeColumn);
 
         // Ambil data nilai rata-rata untuk semua user
@@ -494,10 +497,4 @@ public class AdminController {
         gradesStage.setScene(scene);
         gradesStage.show();
     }
-
-
-
-
-
-
 }

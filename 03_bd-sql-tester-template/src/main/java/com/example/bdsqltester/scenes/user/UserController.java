@@ -49,7 +49,6 @@ public class UserController {
         nameField.setFocusTraversable(false);
 
         instructionsField.setEditable(false);
-        instructionsField.setMouseTransparent(true);
         instructionsField.setFocusTraversable(false);
 
         // Populate the ListView with assignment names
@@ -154,6 +153,7 @@ public class UserController {
             alert.showAndWait();
         }
     }
+
     int userId = HelloApplication.getApplicationInstance().getUserId();
 
     @FXML
@@ -248,18 +248,28 @@ public class UserController {
         // Bandingkan hasil query user dengan kunci jawaban
         int grade = compareResults(userQueryResult, answerKeyResult);
         // Debugging: Cetak nilai grade yang dihitung
-        System.out.println("Grade: " + grade);
+//        System.out.println("Grade: " + grade);
 
 
         // Menyimpan nilai ke tabel jika perlu
         saveGradeToDatabase(grade);
+
+        int userId = HelloApplication.getApplicationInstance().getUserId(); // Ambil user_id yang disimpan saat login
+
+        double storedGrade = getGradeFromDatabase(userId, Integer.parseInt(idField.getText())); // Ambil grade berdasarkan user_id dan assignment_id
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Penilaian");
+        alert.setHeaderText("Tugas Berhasil disubmit!");
+        alert.setContentText("Anda mendapatkan nilai: " + storedGrade);
+        alert.showAndWait();
     }
 
     private String getAnswerKeyFromDatabase(int assignmentId) {
         String answerKey = "";
 
         // Query untuk mengambil kunci jawaban dari database berdasarkan assignment_id
-        try (Connection conn = GradingDataSource.getConnection();
+        try (Connection conn = MainDataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT answer_key FROM assignments WHERE id = ?")) {
 
             stmt.setInt(1, assignmentId);  // Set assignment_id yang dipilih oleh user
@@ -300,7 +310,7 @@ public class UserController {
             result.append("Error executing query: ").append(e.getMessage());
         }
         // Debugging: Cetak hasil query yang dieksekusi
-        System.out.println("User Query Result: " + result.toString());
+//        System.out.println("User Query Result: " + result.toString());
         return result.toString();
     }
 
@@ -311,8 +321,8 @@ public class UserController {
         String[] answerKeyRows = cleanString(answerKeyResult).split("\n");
 
         // Debugging: Cetak hasil untuk melihat apakah mereka sesuai dengan yang diharapkan
-        System.out.println("User Result: " + Arrays.toString(userRows));
-        System.out.println("Answer Key: " + Arrays.toString(answerKeyRows));
+//        System.out.println("User Result: " + Arrays.toString(userRows));
+//        System.out.println("Answer Key: " + Arrays.toString(answerKeyRows));
 
         // Memeriksa apakah isi dan urutan sama
         if (Arrays.equals(userRows, answerKeyRows)) {
@@ -323,8 +333,23 @@ public class UserController {
         ArrayList<String> userList = new ArrayList<>(Arrays.asList(userRows));
         ArrayList<String> answerKeyList = new ArrayList<>(Arrays.asList(answerKeyRows));
 
+        boolean fandy = false;
+        int count = 0;
+        if (userList.size() == answerKeyList.size()) {
+            for (int i = 0; i < userList.size(); i++) {
+                for (int j = 0; j < answerKeyList.size(); j++) {
+                    if (userList.get(i).trim().equals(answerKeyList.get(j).trim())){
+                        count++;
+                        break;
+                    }
+                }
+                if (count == userList.size()){
+                    fandy = true;
+                }
+            }
+        }
         // Periksa jika hanya isi yang cocok tetapi urutan tidak
-        if (userList.size() == answerKeyList.size() && userList.containsAll(answerKeyList)) {
+        if (userList.size() == answerKeyList.size() && fandy) {
             return 50; // Isi cocok tetapi urutan tidak cocok
         }
 
@@ -333,7 +358,7 @@ public class UserController {
 
     // Fungsi untuk membersihkan hasil query dan kunci jawaban dari karakter tambahan
     private String cleanString(String str) {
-        return str.replaceAll("[\\n\\t\\r]+", " ").trim(); // Mengganti tab, newline dengan spasi
+        return str.replaceAll("[\\t]+", " ").trim(); // Mengganti tab, newline dengan spasi
     }
 
 
@@ -344,7 +369,7 @@ public class UserController {
         int assignmentId = Integer.parseInt(idField.getText());  // Pastikan idField berisi assignment_id yang benar
 
         // Logika untuk menyimpan nilai ke dalam tabel grade
-        try (Connection conn = GradingDataSource.getConnection()) {
+        try (Connection conn = MainDataSource.getConnection()) {
             String sql = "INSERT INTO grades (user_id, assignment_id, grade) " +
                     "VALUES (?, ?, ?) " +
                     "ON CONFLICT (user_id, assignment_id) DO UPDATE SET grade = EXCLUDED.grade";
@@ -368,7 +393,7 @@ public class UserController {
 
     private double getGradeFromDatabase(int userId, int assignmentId) {
         double storedGrade = 0;
-        try (Connection conn = GradingDataSource.getConnection();
+        try (Connection conn = MainDataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT grade FROM grades WHERE user_id = ? AND assignment_id = ?")) {
 
             stmt.setInt(1, userId);
@@ -409,7 +434,7 @@ public class UserController {
                 "JOIN assignments a ON g.assignment_id = a.id " +
                 "WHERE g.user_id = ?";
 
-        try (Connection conn = GradingDataSource.getConnection();
+        try (Connection conn = MainDataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, userId);  // Set user_id yang login
