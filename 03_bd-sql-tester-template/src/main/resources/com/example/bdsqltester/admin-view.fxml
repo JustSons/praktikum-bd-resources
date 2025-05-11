@@ -73,6 +73,11 @@
                   <Button mnemonicParsing="false" onAction="#onDeleteClick" text="Delete" />
                </children>
             </HBox>
+            <HBox alignment="CENTER" prefHeight="47.0" prefWidth="273.0">
+               <children>
+                  <Button mnemonicParsing="false" onAction="#onShowAverageAssignmentClick" text="Show The Average Grade For This Assignment" />
+               </children>
+            </HBox>
          </children>
          <padding>
             <Insets left="8.0" right="8.0" />

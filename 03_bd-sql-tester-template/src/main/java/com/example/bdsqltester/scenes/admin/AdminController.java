@@ -497,4 +497,52 @@ public class AdminController {
         gradesStage.setScene(scene);
         gradesStage.show();
     }
+
+    private double fetchAverageGradeForAssignment(int assignmentId) {
+        double averageGrade = 0.0;
+
+        // Query untuk menghitung rata-rata nilai dari semua user pada assignment yang dipilih
+        try (Connection conn = MainDataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT COALESCE(AVG(g.grade), 0) AS average_grade " +
+                             "FROM grades g " +
+                             "WHERE g.assignment_id = ?")) {
+
+            stmt.setInt(1, assignmentId); // Menyaring berdasarkan assignment_id yang dipilih
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                averageGrade = rs.getDouble("average_grade");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return averageGrade;
+    }
+
+    @FXML
+    void onShowAverageAssignmentClick(ActionEvent event) {
+        // Pastikan assignment_id sudah ada
+        if (idField.getText().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("No Assignment Selected");
+            alert.setContentText("Please select an assignment to view the average grade.");
+            alert.showAndWait();
+            return;
+        }
+
+        int assignmentId = Integer.parseInt(idField.getText());
+
+        // Ambil rata-rata nilai dari assignment yang dipilih
+        double averageGrade = fetchAverageGradeForAssignment(assignmentId);
+
+        // Tampilkan rata-rata nilai dalam sebuah alert
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Average Grade for Assignment");
+        alert.setHeaderText("Average Grade for Assignment");
+        alert.setContentText("The average grade for this assignment is: " + averageGrade);
+        alert.showAndWait();
+    }
 }
