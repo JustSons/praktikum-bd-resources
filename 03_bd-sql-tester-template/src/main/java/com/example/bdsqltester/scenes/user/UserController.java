@@ -238,7 +238,7 @@ public class UserController {
     public void onSubmitClick(ActionEvent event) {
         // Ambil assignment_id dari idField (Assignment yang dipilih)
         int assignmentId = Integer.parseInt(idField.getText());
-
+        int userId = HelloApplication.getApplicationInstance().getUserId();
         // Ambil hasil dari query yang dijalankan oleh user
         String userQueryResult = executeQuery(answerKeyField.getText());
 
@@ -250,19 +250,22 @@ public class UserController {
         // Debugging: Cetak nilai grade yang dihitung
 //        System.out.println("Grade: " + grade);
 
-
-        // Menyimpan nilai ke tabel jika perlu
-        saveGradeToDatabase(grade);
-
-        int userId = HelloApplication.getApplicationInstance().getUserId(); // Ambil user_id yang disimpan saat login
-
-        double storedGrade = getGradeFromDatabase(userId, Integer.parseInt(idField.getText())); // Ambil grade berdasarkan user_id dan assignment_id
-
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Penilaian");
-        alert.setHeaderText("Tugas Berhasil disubmit!");
-        alert.setContentText("Anda mendapatkan nilai: " + storedGrade);
-        alert.showAndWait();
+        double storedGrade = getGradeFromDatabase(userId, assignmentId);
+        if (grade >= storedGrade) {
+            saveGradeToDatabase(grade);  // Simpan nilai baru
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Penilaian");
+            alert.setHeaderText("Tugas Berhasil disubmit!");
+            alert.setContentText("Anda mendapatkan nilai: " + grade);
+            alert.showAndWait();
+        } else {
+            // Menampilkan pesan jika nilai tidak lebih tinggi
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Penilaian");
+            alert.setHeaderText("Tugas Berhasil disubmit!");
+            alert.setContentText("Anda mendapatkan nilai: " + grade+ ", tapi nilai anda sebelumnya lebih tinggi, yaitu: "+storedGrade);
+            alert.showAndWait();
+        }
     }
 
     private String getAnswerKeyFromDatabase(int assignmentId) {
